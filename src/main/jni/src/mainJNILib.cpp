@@ -9,6 +9,7 @@ extern "C" {
 
 #include <android/native_window.h>
 #include <android/native_window_jni.h>
+#include <android/bitmap.h>
 #include <utils/Mutex.h>
 using namespace android;
 
@@ -181,6 +182,15 @@ JNI_FUNC(jint, PdfiumCore, nativeGetPageHeightPixel)(JNI_ARGS, jlong pagePtr, ji
     return (jint)(FPDF_GetPageHeight(page) * dpi / 72);
 }
 
+JNI_FUNC(jint, PdfiumCore, nativeGetPageWidthPoint)(JNI_ARGS, jlong pagePtr, jint dpi){
+    FPDF_PAGE page = reinterpret_cast<FPDF_PAGE>(pagePtr);
+    return (jint)FPDF_GetPageWidth(page);
+}
+JNI_FUNC(jint, PdfiumCore, nativeGetPageHeightPoint)(JNI_ARGS, jlong pagePtr, jint dpi){
+    FPDF_PAGE page = reinterpret_cast<FPDF_PAGE>(pagePtr);
+    return (jint)FPDF_GetPageHeight(page);
+}
+
 static void renderPageInternal( FPDF_PAGE page,
                                 ANativeWindow_Buffer *windowBuffer,
                                 int startX, int startY,
@@ -253,6 +263,66 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPage)(JNI_ARGS, jlong pagePtr, jobject ob
 
     ANativeWindow_unlockAndPost(nativeWindow);
     ANativeWindow_release(nativeWindow);
+}
+
+JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobject bitmap,
+                                             jint dpi, jint startX, jint startY,
+                                             jint drawSizeHor, jint drawSizeVer){
+
+    FPDF_PAGE page = reinterpret_cast<FPDF_PAGE>(pagePtr);
+
+    if(page == NULL || bitmap == NULL){
+        LOGE("Render page pointers invalid");
+        return;
+    }
+
+    AndroidBitmapInfo info;
+    AndroidBitmap_getInfo(env, bitmap, &info);
+
+    int canvasHorSize = info.width;
+    int canvasVerSize = info.height;
+
+    if(info.format != ANDROID_BITMAP_FORMAT_RGBA_8888){
+        LOGE("Bitmap format must be RGBA_8888");
+        return;
+    }
+
+    void *addr;
+    int ret;
+    if( (ret = AndroidBitmap_lockPixels(env, bitmap, &addr)) != 0 ){
+        LOGE("Locking bitmap failed: %s", strerror(ret * -1));
+        return;
+    }
+
+    FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx( canvasHorSize, canvasVerSize,
+                                                     FPDFBitmap_BGRA,
+                                                     addr, info.width * 4);
+
+    LOGD("Start X: %d", startX);
+    LOGD("Start Y: %d", startY);
+    LOGD("Canvas Hor: %d", canvasHorSize);
+    LOGD("Canvas Ver: %d", canvasVerSize);
+    LOGD("Draw Hor: %d", drawSizeHor);
+    LOGD("Draw Ver: %d", drawSizeVer);
+
+    if(drawSizeHor < canvasHorSize || drawSizeVer < canvasVerSize){
+        FPDFBitmap_FillRect( pdfBitmap, 0, 0, canvasHorSize, canvasVerSize,
+                             0x84, 0x84, 0x84, 255); //Gray
+    }
+
+    int baseHorSize = (canvasHorSize < drawSizeHor)? canvasHorSize : (int)drawSizeHor;
+    int baseVerSize = (canvasVerSize < drawSizeVer)? canvasVerSize : (int)drawSizeVer;
+    int baseX = (startX < 0)? 0 : (int)startX;
+    int baseY = (startY < 0)? 0 : (int)startY;
+    FPDFBitmap_FillRect( pdfBitmap, baseX, baseY, baseHorSize, baseVerSize,
+                         255, 255, 255, 255); //White
+
+    FPDF_RenderPageBitmap( pdfBitmap, page,
+                           startX, startY,
+                           (int)drawSizeHor, (int)drawSizeVer,
+                           0, FPDF_REVERSE_BYTE_ORDER );
+
+    AndroidBitmap_unlockPixels(env, bitmap);
 }
 
 }//extern C

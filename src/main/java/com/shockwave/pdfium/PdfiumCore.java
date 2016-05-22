@@ -1,6 +1,7 @@
 package com.shockwave.pdfium;
 
 import android.content.Context;
+import android.graphics.Bitmap;
 import android.util.Log;
 import android.view.Surface;
 
@@ -23,9 +24,14 @@ public class PdfiumCore {
     private native void nativeClosePages(long[] pagesPtr);
     private native int nativeGetPageWidthPixel(long pagePtr, int dpi);
     private native int nativeGetPageHeightPixel(long pagePtr, int dpi);
+    private native int nativeGetPageWidthPoint(long pagePtr);
+    private native int nativeGetPageHeightPoint(long pagePtr);
     //private native long nativeGetNativeWindow(Surface surface);
     //private native void nativeRenderPage(long pagePtr, long nativeWindowPtr);
     private native void nativeRenderPage(long pagePtr, Surface surface, int dpi,
+                                         int startX, int startY,
+                                         int drawSizeHor, int drawSizeVer);
+    private native void nativeRenderPageBitmap(long pagePtr, Bitmap bitmap, int dpi,
                                          int startX, int startY,
                                          int drawSizeHor, int drawSizeVer);
 
@@ -108,6 +114,24 @@ public class PdfiumCore {
             return 0;
         }
     }
+    public int getPageWidthPoint(PdfDocument doc, int index){
+        synchronized (doc.Lock){
+            Long pagePtr;
+            if( (pagePtr = doc.mNativePagesPtr.get(index)) != null ){
+                return nativeGetPageWidthPoint(pagePtr);
+            }
+            return 0;
+        }
+    }
+    public int getPageHeightPoint(PdfDocument doc, int index){
+        synchronized (doc.Lock){
+            Long pagePtr;
+            if( (pagePtr = doc.mNativePagesPtr.get(index)) != null ){
+                return nativeGetPageHeightPoint(pagePtr);
+            }
+            return 0;
+        }
+    }
 
     public void renderPage(PdfDocument doc, Surface surface, int pageIndex,
                            int startX, int startY, int drawSizeX, int drawSizeY){
@@ -116,6 +140,22 @@ public class PdfiumCore {
                 //nativeRenderPage(doc.mNativePagesPtr.get(pageIndex), surface, mCurrentDpi);
                 nativeRenderPage(doc.mNativePagesPtr.get(pageIndex), surface, mCurrentDpi,
                                     startX, startY, drawSizeX, drawSizeY);
+            }catch(NullPointerException e){
+                Log.e(TAG, "mContext may be null");
+                e.printStackTrace();
+            }catch(Exception e){
+                Log.e(TAG, "Exception throw from native");
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public void renderPageBitmap(PdfDocument doc, Bitmap bitmap, int pageIndex,
+                           int startX, int startY, int drawSizeX, int drawSizeY){
+        synchronized (doc.Lock){
+            try{
+                nativeRenderPageBitmap(doc.mNativePagesPtr.get(pageIndex), bitmap, mCurrentDpi,
+                        startX, startY, drawSizeX, drawSizeY);
             }catch(NullPointerException e){
                 Log.e(TAG, "mContext may be null");
                 e.printStackTrace();
