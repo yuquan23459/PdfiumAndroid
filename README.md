@@ -3,7 +3,7 @@ Use pdfium library [from AOSP](https://android.googlesource.com/platform/externa
 
 The demo app (for not modified lib) is [here](https://github.com/mshockwave/PdfiumAndroid-Demo-App)
 
-Forked specially for use with modified PdfViewPager project.
+Forked specially for use with [PdfViewPager](https://github.com/barteksc/PdfViewPager) project.
 
 ## Changes in this fork:
 * Added method for rendering PDF page on bitmap
@@ -17,6 +17,13 @@ Forked specially for use with modified PdfViewPager project.
     * `int getPageHeightPoint(PdfDocument doc, int index);`
 
 API is fully compatible with original version, only additional methods were created.
+
+## Installation
+Add to _build.gradle_:
+
+`compile 'com.github.barteksc:pdfium-android:1.0'`
+
+Library is available in jcenter repository, it should be added to Maven Central soon.
 
 ## Simple example
 ``` java
@@ -41,6 +48,3 @@ iv.setImageBitmap(bitmap);
 ## Build native part
 Go to `PROJECT_PATH/src/main/jni` and run command `$ ndk-build`.
 This step may be executed only once, every future `.aar` build will use generated libs.
-
-## TODO
-* Push to jcenter
