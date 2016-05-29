@@ -12,6 +12,7 @@ public class PdfiumCore {
     private static final String TAG = PdfiumCore.class.getName();
 
     static{
+        System.loadLibrary("pdfium");
         System.loadLibrary("jniPdfium");
     }
 
