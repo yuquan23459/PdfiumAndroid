@@ -21,9 +21,9 @@ API is fully compatible with original version, only additional methods were crea
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.0.1'`
+`compile 'com.github.barteksc:pdfium-android:1.0.2'`
 
-Library is available in jcenter repository, it should be added to Maven Central soon.
+Library is available in jcenter and Maven Central repositories.
 
 ## Simple example
 ``` java
