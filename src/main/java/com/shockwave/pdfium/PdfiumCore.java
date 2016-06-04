@@ -63,11 +63,14 @@ public class PdfiumCore {
         }
     }
 
-    public PdfDocument newDocument(FileDescriptor fd){
+    public PdfDocument newDocument(FileDescriptor fd) throws PdfOpenException {
         PdfDocument document = new PdfDocument();
 
         document.mNativeDocPtr = nativeOpenDocument(getNumFd(fd));
-        if(document.mNativeDocPtr <= 0) Log.e(TAG, "Open document failed");
+        if(document.mNativeDocPtr == -1) {
+            Log.e(TAG, "Open document failed");
+            throw new PdfOpenException("Open document failed");
+        }
 
         return document;
     }

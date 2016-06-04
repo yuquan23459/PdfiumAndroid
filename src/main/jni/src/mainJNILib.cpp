@@ -277,7 +277,11 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
     }
 
     AndroidBitmapInfo info;
-    AndroidBitmap_getInfo(env, bitmap, &info);
+    int ret;
+    if((ret = AndroidBitmap_getInfo(env, bitmap, &info)) < 0) {
+        LOGE("Fetching bitmap info failed: %s", strerror(ret * -1));
+        return;
+    }
 
     int canvasHorSize = info.width;
     int canvasVerSize = info.height;
@@ -288,7 +292,6 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
     }
 
     void *addr;
-    int ret;
     if( (ret = AndroidBitmap_lockPixels(env, bitmap, &addr)) != 0 ){
         LOGE("Locking bitmap failed: %s", strerror(ret * -1));
         return;
@@ -296,7 +299,7 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
 
     FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx( canvasHorSize, canvasVerSize,
                                                      FPDFBitmap_BGRA,
-                                                     addr, info.width * 4);
+                                                     addr, info.stride);
 
     LOGD("Start X: %d", startX);
     LOGD("Start Y: %d", startY);
