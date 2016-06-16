@@ -5,6 +5,7 @@ extern "C" {
     #include <sys/mman.h>
     #include <sys/stat.h>
     #include <string.h>
+    #include <stdio.h>
 }
 
 #include <android/native_window.h>
@@ -83,6 +84,58 @@ inline long getFileSize(int fd){
     }
 }
 
+static char* getErrorDescription(const long error) {
+    char* description = NULL;
+    switch(error) {
+        case FPDF_ERR_SUCCESS:
+            asprintf(&description, "No error.");
+            break;
+        case FPDF_ERR_FILE:
+            asprintf(&description, "File not found or could not be opened.");
+            break;
+        case FPDF_ERR_FORMAT:
+            asprintf(&description, "File not in PDF format or corrupted.");
+            break;
+        case FPDF_ERR_PASSWORD:
+            asprintf(&description, "Incorrect password.");
+            break;
+        case FPDF_ERR_SECURITY:
+            asprintf(&description, "Unsupported security scheme.");
+            break;
+        case FPDF_ERR_PAGE:
+            asprintf(&description, "Page not found or content error.");
+            break;
+        default:
+            asprintf(&description, "Unknown error.");
+    }
+
+    return description;
+}
+
+int jniThrowException(JNIEnv* env, const char* className, const char* message) {
+    jclass exClass = env->FindClass(className);
+    if (exClass == NULL) {
+        LOGE("Unable to find exception class %s", className);
+        return -1;
+    }
+
+    if(env->ThrowNew(exClass, message ) != JNI_OK) {
+        LOGE("Failed throwing '%s' '%s'", className, message);
+        return -1;
+    }
+
+    return 0;
+}
+
+int jniThrowExceptionFmt(JNIEnv* env, const char* className, const char* fmt, ...) {
+    va_list args;
+    va_start(args, fmt);
+    char msgBuf[512];
+    vsnprintf(msgBuf, sizeof(msgBuf), fmt, args);
+    return jniThrowException(env, className, msgBuf);
+    va_end(args);
+}
+
 extern "C" { //For JNI support
 
 JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd){
@@ -109,7 +162,12 @@ JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd){
     }catch(const char* msg){
         delete docFile;
         LOGE("%s", msg);
-        LOGE("Last Error: %ld", FPDF_GetLastError());
+        char* error = getErrorDescription(FPDF_GetLastError());
+
+        jniThrowExceptionFmt(env, "java/io/IOException",
+                            "cannot create document: %s", error);
+
+        free(error);
 
         return -1;
     }
@@ -125,7 +183,7 @@ JNI_FUNC(void, PdfiumCore, nativeCloseDocument)(JNI_ARGS, jlong documentPtr){
     delete doc;
 }
 
-static jlong loadPageInternal(DocumentFile *doc, int pageIndex){
+static jlong loadPageInternal(JNIEnv *env, DocumentFile *doc, int pageIndex){
     try{
         if(doc == NULL) throw "Get page document null";
 
@@ -138,6 +196,10 @@ static jlong loadPageInternal(DocumentFile *doc, int pageIndex){
 
     }catch(const char *msg){
         LOGE("%s", msg);
+
+        jniThrowException(env, "java/lang/IllegalStateException",
+                                "cannot load page");
+
         return -1;
     }
 }
@@ -145,7 +207,7 @@ static void closePageInternal(jlong pagePtr) { FPDF_ClosePage(reinterpret_cast<F
 
 JNI_FUNC(jlong, PdfiumCore, nativeLoadPage)(JNI_ARGS, jlong docPtr, jint pageIndex){
     DocumentFile *doc = reinterpret_cast<DocumentFile*>(docPtr);
-    return loadPageInternal(doc, (int)pageIndex);
+    return loadPageInternal(env, doc, (int)pageIndex);
 }
 JNI_FUNC(jlongArray, PdfiumCore, nativeLoadPages)(JNI_ARGS, jlong docPtr, jint fromIndex, jint toIndex){
     DocumentFile *doc = reinterpret_cast<DocumentFile*>(docPtr);
@@ -155,7 +217,7 @@ JNI_FUNC(jlongArray, PdfiumCore, nativeLoadPages)(JNI_ARGS, jlong docPtr, jint f
 
     int i;
     for(i = 0; i <= (toIndex - fromIndex); i++){
-        pages[i] = loadPageInternal(doc, (int)(i + fromIndex));
+        pages[i] = loadPageInternal(env, doc, (int)(i + fromIndex));
     }
 
     jlongArray javaPages = env -> NewLongArray( (jsize)(toIndex - fromIndex + 1) );

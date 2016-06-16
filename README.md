@@ -15,13 +15,18 @@ Forked specially for use with [PdfViewPager](https://github.com/barteksc/PdfView
 * Added methods to get width and height of page in points (1/72") (like in `PdfRenderer.Page` class):
     * `int getPageWidthPoint(PdfDocument doc, int index);`
     * `int getPageHeightPoint(PdfDocument doc, int index);`
+* `newDocument()` throws IOException
 
 API is fully compatible with original version, only additional methods were created.
+
+## What's new in 1.0.3'?
+* probably fixed bug when pdf should open as normal but was throwing exception
+* added much more descriptive exception messages
 
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.0.2'`
+`compile 'com.github.barteksc:pdfium-android:1.0.3'`
 
 Library is available in jcenter and Maven Central repositories.
 
@@ -31,19 +36,25 @@ ImageView iv = (ImageView) findViewById(R.id.imageView);
 FileDescriptor fd = ...;
 int pageNum = 0;
 PdfiumCore pdfiumCore = new PdfiumCore(context);
-PdfDocument pdfDocument = pdfiumCore.newDocument(fd);
+try {
+    PdfDocument pdfDocument = pdfiumCore.newDocument(fd);
 
-pdfiumCore.openPage(pdfDocument, pageNum);
+    pdfiumCore.openPage(pdfDocument, pageNum);
 
-int width = pdfiumCore.getPageWidthPoint(pdfDocument, pageNum);
-int height = pdfiumCore.getPageHeightPoint(pdfDocument, pageNum);
+    int width = pdfiumCore.getPageWidthPoint(pdfDocument, pageNum);
+    int height = pdfiumCore.getPageHeightPoint(pdfDocument, pageNum);
 
-Bitmap bitmap = Bitmap.createBitmap(width, height,
-        Bitmap.Config.ARGB_8888);
-pdfiumCore.renderPageBitmap(pdfDocument, bitmap, pageNum, 0, 0,
-        width, height);
+    Bitmap bitmap = Bitmap.createBitmap(width, height,
+            Bitmap.Config.ARGB_8888);
+    pdfiumCore.renderPageBitmap(pdfDocument, bitmap, pageNum, 0, 0,
+            width, height);
 
-iv.setImageBitmap(bitmap);
+    iv.setImageBitmap(bitmap);
+
+    pdfiumCore.closeDocument(pdfDocument);
+} catch(IOException ex) {
+    ex.printStackTrace();
+}
 ```
 ## Build native part
 Go to `PROJECT_PATH/src/main/jni` and run command `$ ndk-build`.
