@@ -1,5 +1,6 @@
 package com.shockwave.pdfium;
 
+import android.os.ParcelFileDescriptor;
 import android.support.v4.util.ArrayMap;
 
 import java.util.Map;
@@ -11,6 +12,7 @@ public class PdfDocument {
     }
 
     /*package*/ long mNativeDocPtr;
+    /*package*/ ParcelFileDescriptor parcelFileDescriptor;
 
     /*package*/ final Map<Integer, Long> mNativePagesPtr = new ArrayMap<>();
 

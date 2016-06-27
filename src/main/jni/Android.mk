@@ -13,7 +13,7 @@ ifeq ($(TARGET_ARCH_ABI), arm64-v8a)
     ARCH_PATH = arm64
 endif
 
-LOCAL_SRC_FILES := $(LOCAL_PATH)/lib/$(ARCH_PATH)/libpdfium.so
+LOCAL_SRC_FILES := $(LOCAL_PATH)/lib/$(ARCH_PATH)/libmodpdfium.so
 
 include $(PREBUILT_SHARED_LIBRARY)
 

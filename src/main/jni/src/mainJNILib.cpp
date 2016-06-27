@@ -138,6 +138,17 @@ int jniThrowExceptionFmt(JNIEnv* env, const char* className, const char* fmt, ..
 
 extern "C" { //For JNI support
 
+static int getBlock(void* param, unsigned long position, unsigned char* outBuffer,
+        unsigned long size) {
+    const int fd = reinterpret_cast<intptr_t>(param);
+    const int readCount = pread(fd, outBuffer, size, position);
+    if (readCount < 0) {
+        LOGE("Cannot read from file descriptor. Error:%d", errno);
+        return 0;
+    }
+    return 1;
+}
+
 JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd){
 
     size_t fileLength = (size_t)getFileSize(fd);
@@ -145,32 +156,28 @@ JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd){
 
     DocumentFile *docFile = new DocumentFile();
 
-    try{
-        void *map;
-        if( (map = mmap( docFile->getFileMap(), fileLength, PROT_READ|PROT_WRITE, MAP_PRIVATE, fd, 0 )) == NULL){
-            throw "Error mapping file";
-        }
-        docFile->setFile(fd, map, fileLength);
+    FPDF_FILEACCESS loader;
+    loader.m_FileLen = fileLength;
+    loader.m_Param = reinterpret_cast<void*>(intptr_t(fd));
+    loader.m_GetBlock = &getBlock;
 
-        if( (docFile->pdfDocument = FPDF_LoadMemDocument( reinterpret_cast<const void*>(docFile->getFileMap()),
-                                                          (int)docFile->fileSize, NULL)) == NULL) {
-            throw "Error loading document from file map";
-        }
+    FPDF_DOCUMENT document = FPDF_LoadCustomDocument(&loader, NULL);
 
-        return reinterpret_cast<jlong>(docFile);
-
-    }catch(const char* msg){
+    if (!document) {
         delete docFile;
-        LOGE("%s", msg);
-        char* error = getErrorDescription(FPDF_GetLastError());
 
+        char* error = getErrorDescription(FPDF_GetLastError());
         jniThrowExceptionFmt(env, "java/io/IOException",
-                            "cannot create document: %s", error);
+                                    "cannot create document: %s", error);
 
         free(error);
 
         return -1;
     }
+
+    docFile->pdfDocument = document;
+
+    return reinterpret_cast<jlong>(docFile);
 }
 
 JNI_FUNC(jint, PdfiumCore, nativeGetPageCount)(JNI_ARGS, jlong documentPtr){

@@ -2,6 +2,7 @@ package com.shockwave.pdfium;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.Surface;
 
@@ -13,7 +14,7 @@ public class PdfiumCore {
     private static final String TAG = PdfiumCore.class.getName();
 
     static {
-        System.loadLibrary("pdfium");
+        System.loadLibrary("modpdfium");
         System.loadLibrary("jniPdfium");
     }
 
@@ -55,18 +56,21 @@ public class PdfiumCore {
 
     private int mCurrentDpi;
 
+    /* synchronize native methods */
+    private static final Object lock = new Object();
+
     public PdfiumCore(Context ctx) {
         mCurrentDpi = ctx.getResources().getDisplayMetrics().densityDpi;
     }
 
-    public static int getNumFd(FileDescriptor fdObj) {
+    public static int getNumFd(ParcelFileDescriptor fdObj) {
         try {
             if (mFdField == null) {
                 mFdField = FD_CLASS.getDeclaredField(FD_FIELD_NAME);
                 mFdField.setAccessible(true);
             }
 
-            return mFdField.getInt(fdObj);
+            return mFdField.getInt(fdObj.getFileDescriptor());
         } catch (NoSuchFieldException e) {
             e.printStackTrace();
             return -1;
@@ -76,31 +80,40 @@ public class PdfiumCore {
         }
     }
 
-    public PdfDocument newDocument(FileDescriptor fd) throws IOException {
+    public PdfDocument newDocument(ParcelFileDescriptor fd) throws IOException {
         PdfDocument document = new PdfDocument();
-
-        document.mNativeDocPtr = nativeOpenDocument(getNumFd(fd));
+        document.parcelFileDescriptor = fd;
+        synchronized (lock) {
+            document.mNativeDocPtr = nativeOpenDocument(getNumFd(fd));
+        }
 
         return document;
     }
 
     public int getPageCount(PdfDocument doc) {
-        synchronized (doc.Lock) {
+        synchronized (lock) {
             return nativeGetPageCount(doc.mNativeDocPtr);
         }
     }
 
     public long openPage(PdfDocument doc, int pageIndex) {
+        long pagePtr;
+        synchronized (lock) {
+            pagePtr = nativeLoadPage(doc.mNativeDocPtr, pageIndex);
+        }
         synchronized (doc.Lock) {
-            long pagePtr = nativeLoadPage(doc.mNativeDocPtr, pageIndex);
             doc.mNativePagesPtr.put(pageIndex, pagePtr);
             return pagePtr;
         }
+
     }
 
     public long[] openPage(PdfDocument doc, int fromIndex, int toIndex) {
+        long[] pagesPtr;
+        synchronized (lock) {
+            pagesPtr = nativeLoadPages(doc.mNativeDocPtr, fromIndex, toIndex);
+        }
         synchronized (doc.Lock) {
-            long[] pagesPtr = nativeLoadPages(doc.mNativeDocPtr, fromIndex, toIndex);
             int pageIndex = fromIndex;
             for (long page : pagesPtr) {
                 if (pageIndex > toIndex) break;
@@ -113,7 +126,7 @@ public class PdfiumCore {
     }
 
     public int getPageWidth(PdfDocument doc, int index) {
-        synchronized (doc.Lock) {
+        synchronized (lock) {
             Long pagePtr;
             if ((pagePtr = doc.mNativePagesPtr.get(index)) != null) {
                 return nativeGetPageWidthPixel(pagePtr, mCurrentDpi);
@@ -123,7 +136,7 @@ public class PdfiumCore {
     }
 
     public int getPageHeight(PdfDocument doc, int index) {
-        synchronized (doc.Lock) {
+        synchronized (lock) {
             Long pagePtr;
             if ((pagePtr = doc.mNativePagesPtr.get(index)) != null) {
                 return nativeGetPageHeightPixel(pagePtr, mCurrentDpi);
@@ -133,7 +146,7 @@ public class PdfiumCore {
     }
 
     public int getPageWidthPoint(PdfDocument doc, int index) {
-        synchronized (doc.Lock) {
+        synchronized (lock) {
             Long pagePtr;
             if ((pagePtr = doc.mNativePagesPtr.get(index)) != null) {
                 return nativeGetPageWidthPoint(pagePtr);
@@ -143,7 +156,7 @@ public class PdfiumCore {
     }
 
     public int getPageHeightPoint(PdfDocument doc, int index) {
-        synchronized (doc.Lock) {
+        synchronized (lock) {
             Long pagePtr;
             if ((pagePtr = doc.mNativePagesPtr.get(index)) != null) {
                 return nativeGetPageHeightPoint(pagePtr);
@@ -154,7 +167,7 @@ public class PdfiumCore {
 
     public void renderPage(PdfDocument doc, Surface surface, int pageIndex,
                            int startX, int startY, int drawSizeX, int drawSizeY) {
-        synchronized (doc.Lock) {
+        synchronized (lock) {
             try {
                 //nativeRenderPage(doc.mNativePagesPtr.get(pageIndex), surface, mCurrentDpi);
                 nativeRenderPage(doc.mNativePagesPtr.get(pageIndex), surface, mCurrentDpi,
@@ -171,7 +184,7 @@ public class PdfiumCore {
 
     public void renderPageBitmap(PdfDocument doc, Bitmap bitmap, int pageIndex,
                                  int startX, int startY, int drawSizeX, int drawSizeY) {
-        synchronized (doc.Lock) {
+        synchronized (lock) {
             try {
                 nativeRenderPageBitmap(doc.mNativePagesPtr.get(pageIndex), bitmap, mCurrentDpi,
                         startX, startY, drawSizeX, drawSizeY);
@@ -186,13 +199,20 @@ public class PdfiumCore {
     }
 
     public void closeDocument(PdfDocument doc) {
-        synchronized (doc.Lock) {
+        synchronized (lock) {
             for (Integer index : doc.mNativePagesPtr.keySet()) {
                 nativeClosePage(doc.mNativePagesPtr.get(index));
             }
             doc.mNativePagesPtr.clear();
 
             nativeCloseDocument(doc.mNativeDocPtr);
+
+            try {
+                doc.parcelFileDescriptor.close();
+            } catch (IOException e) {
+                /* ignore */
+            }
+            doc.parcelFileDescriptor = null;
         }
     }
 }

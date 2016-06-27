@@ -3,7 +3,7 @@ Use pdfium library [from AOSP](https://android.googlesource.com/platform/externa
 
 The demo app (for not modified lib) is [here](https://github.com/mshockwave/PdfiumAndroid-Demo-App)
 
-Forked specially for use with [PdfViewPager](https://github.com/barteksc/PdfViewPager) project.
+Forked for use with [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfViewer) project.
 
 ## Changes in this fork:
 * Added method for rendering PDF page on bitmap
@@ -16,24 +16,29 @@ Forked specially for use with [PdfViewPager](https://github.com/barteksc/PdfView
     * `int getPageWidthPoint(PdfDocument doc, int index);`
     * `int getPageHeightPoint(PdfDocument doc, int index);`
 * `newDocument()` throws IOException
+* `newDocument()` requires `ParcelFileDescriptor` instead of `FileDescriptor`
+* synchronize PdfiumCore between instances, which allows to render multiple PDFs at the same time
+* compile Pdfium with SONAME `libmodpdfium` - it ensures that our build of pdfium is not replaced by system version available since Lollipop
 
-API is fully compatible with original version, only additional methods were created.
+API is highly compatible with original version, only additional methods were created.
 
-## What's new in 1.0.3'?
-* probably fixed bug when pdf should open as normal but was throwing exception
-* added much more descriptive exception messages
+## What's new in 1.1.0?
+* fixed rendering multiple PDFs at the same time thanks to synchronization between instances
+* compile Pdfium with SONAME `libmodpdfium`
+* `newDocument()` requires `ParcelFileDescriptor` instead of `FileDescriptor` to keep file descriptor open
+* changed method of loading PDFs, which should be more stable
 
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.0.3'`
+`compile 'com.github.barteksc:pdfium-android:1.1.0'`
 
 Library is available in jcenter and Maven Central repositories.
 
 ## Simple example
 ``` java
 ImageView iv = (ImageView) findViewById(R.id.imageView);
-FileDescriptor fd = ...;
+ParcelFileDescriptor fd = ...;
 int pageNum = 0;
 PdfiumCore pdfiumCore = new PdfiumCore(context);
 try {
@@ -51,7 +56,7 @@ try {
 
     iv.setImageBitmap(bitmap);
 
-    pdfiumCore.closeDocument(pdfDocument);
+    pdfiumCore.closeDocument(pdfDocument); // important!
 } catch(IOException ex) {
     ex.printStackTrace();
 }
