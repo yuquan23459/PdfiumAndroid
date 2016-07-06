@@ -5,61 +5,77 @@ The demo app (for not modified lib) is [here](https://github.com/mshockwave/Pdfi
 
 Forked for use with [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfViewer) project.
 
-## Changes in this fork:
-* Added method for rendering PDF page on bitmap
-
-    ``` java
-    void renderPageBitmap(PdfDocument doc, Bitmap bitmap, int pageIndex,
-                          int startX, int startY, int drawSizeX, int drawSizeY);
-    ```
-* Added methods to get width and height of page in points (1/72") (like in `PdfRenderer.Page` class):
-    * `int getPageWidthPoint(PdfDocument doc, int index);`
-    * `int getPageHeightPoint(PdfDocument doc, int index);`
-* `newDocument()` throws IOException
-* `newDocument()` requires `ParcelFileDescriptor` instead of `FileDescriptor`
-* synchronize PdfiumCore between instances, which allows to render multiple PDFs at the same time
-* compile Pdfium with SONAME `libmodpdfium` - it ensures that our build of pdfium is not replaced by system version available since Lollipop
-
 API is highly compatible with original version, only additional methods were created.
 
-## What's new in 1.1.0?
-* fixed rendering multiple PDFs at the same time thanks to synchronization between instances
-* compile Pdfium with SONAME `libmodpdfium`
-* `newDocument()` requires `ParcelFileDescriptor` instead of `FileDescriptor` to keep file descriptor open
-* changed method of loading PDFs, which should be more stable
+## What's new in 1.2.0?
+* `libmodpdfium` compiled with methods for retrieving bookmarks and metadata
+* added `PdfiumCore#getDocumentMeta` for retrieving document metadata
+* added `PdfiumCore#getTableOfContents` for reading whole tree of bookmarks
+* comment out native rendering debug
 
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.1.0'`
+`compile 'com.github.barteksc:pdfium-android:1.2.0'`
 
 Library is available in jcenter and Maven Central repositories.
 
 ## Simple example
 ``` java
-ImageView iv = (ImageView) findViewById(R.id.imageView);
-ParcelFileDescriptor fd = ...;
-int pageNum = 0;
-PdfiumCore pdfiumCore = new PdfiumCore(context);
-try {
-    PdfDocument pdfDocument = pdfiumCore.newDocument(fd);
+void openPdf() {
+    ImageView iv = (ImageView) findViewById(R.id.imageView);
+    ParcelFileDescriptor fd = ...;
+    int pageNum = 0;
+    PdfiumCore pdfiumCore = new PdfiumCore(context);
+    try {
+        PdfDocument pdfDocument = pdfiumCore.newDocument(fd);
 
-    pdfiumCore.openPage(pdfDocument, pageNum);
+        pdfiumCore.openPage(pdfDocument, pageNum);
 
-    int width = pdfiumCore.getPageWidthPoint(pdfDocument, pageNum);
-    int height = pdfiumCore.getPageHeightPoint(pdfDocument, pageNum);
+        int width = pdfiumCore.getPageWidthPoint(pdfDocument, pageNum);
+        int height = pdfiumCore.getPageHeightPoint(pdfDocument, pageNum);
 
-    Bitmap bitmap = Bitmap.createBitmap(width, height,
-            Bitmap.Config.ARGB_8888);
-    pdfiumCore.renderPageBitmap(pdfDocument, bitmap, pageNum, 0, 0,
-            width, height);
+        Bitmap bitmap = Bitmap.createBitmap(width, height,
+                Bitmap.Config.ARGB_8888);
+        pdfiumCore.renderPageBitmap(pdfDocument, bitmap, pageNum, 0, 0,
+                width, height);
 
-    iv.setImageBitmap(bitmap);
+        iv.setImageBitmap(bitmap);
 
-    pdfiumCore.closeDocument(pdfDocument); // important!
-} catch(IOException ex) {
-    ex.printStackTrace();
+        printInfo(pdfiumCore, pdfDocument);
+
+        pdfiumCore.closeDocument(pdfDocument); // important!
+    } catch(IOException ex) {
+        ex.printStackTrace();
+    }
 }
+
+public void printInfo(PdfiumCore core, PdfDocument doc) {
+    PdfDocument.Meta meta = core.getDocumentMeta(doc);
+    Log.e(TAG, "title = " + meta.getTitle());
+    Log.e(TAG, "author = " + meta.getAuthor());
+    Log.e(TAG, "subject = " + meta.getSubject());
+    Log.e(TAG, "keywords = " + meta.getKeywords());
+    Log.e(TAG, "creator = " + meta.getCreator());
+    Log.e(TAG, "producer = " + meta.getProducer());
+    Log.e(TAG, "creationDate = " + meta.getCreationDate());
+    Log.e(TAG, "modDate = " + meta.getModDate());
+
+    printBookmarksTree(core.getTableOfContents(doc), "-");
+
+}
+
+public void printBookmarksTree(List<PdfDocument.Bookmark> tree, String sep) {
+    for (PdfDocument.Bookmark b : tree) {
+
+        Log.e(TAG, String.format("%s %s, p %d", sep, b.getTitle(), b.getPageIdx()));
+
+        if (b.hasChildren()) {
+            printBookmarksTree(b.getChildren(), sep + "-");
+        }
+    }
+}
+
 ```
 ## Build native part
 Go to `PROJECT_PATH/src/main/jni` and run command `$ ndk-build`.

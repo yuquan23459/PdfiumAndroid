@@ -9,6 +9,8 @@ import android.view.Surface;
 import java.io.FileDescriptor;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 public class PdfiumCore {
     private static final String TAG = PdfiumCore.class.getName();
@@ -49,6 +51,16 @@ public class PdfiumCore {
     private native void nativeRenderPageBitmap(long pagePtr, Bitmap bitmap, int dpi,
                                                int startX, int startY,
                                                int drawSizeHor, int drawSizeVer);
+
+    private native String nativeGetDocumentMetaText(long docPtr, String tag);
+
+    private native Long nativeGetFirstChildBookmark(long docPtr, Long bookmarkPtr);
+
+    private native Long nativeGetSiblingBookmark(long docPtr, long bookmarkPtr);
+
+    private native String nativeGetBookmarkTitle(long bookmarkPtr);
+
+    private native long nativeGetBookmarkDestIndex(long docPtr, long bookmarkPtr);
 
     private static final Class FD_CLASS = FileDescriptor.class;
     private static final String FD_FIELD_NAME = "descriptor";
@@ -100,8 +112,6 @@ public class PdfiumCore {
         long pagePtr;
         synchronized (lock) {
             pagePtr = nativeLoadPage(doc.mNativeDocPtr, pageIndex);
-        }
-        synchronized (doc.Lock) {
             doc.mNativePagesPtr.put(pageIndex, pagePtr);
             return pagePtr;
         }
@@ -112,8 +122,6 @@ public class PdfiumCore {
         long[] pagesPtr;
         synchronized (lock) {
             pagesPtr = nativeLoadPages(doc.mNativeDocPtr, fromIndex, toIndex);
-        }
-        synchronized (doc.Lock) {
             int pageIndex = fromIndex;
             for (long page : pagesPtr) {
                 if (pageIndex > toIndex) break;
@@ -213,6 +221,51 @@ public class PdfiumCore {
                 /* ignore */
             }
             doc.parcelFileDescriptor = null;
+        }
+    }
+
+    public PdfDocument.Meta getDocumentMeta(PdfDocument doc) {
+        synchronized (lock) {
+            PdfDocument.Meta meta = new PdfDocument.Meta();
+            meta.title = nativeGetDocumentMetaText(doc.mNativeDocPtr, "Title");
+            meta.author = nativeGetDocumentMetaText(doc.mNativeDocPtr, "Author");
+            meta.subject = nativeGetDocumentMetaText(doc.mNativeDocPtr, "Subject");
+            meta.keywords = nativeGetDocumentMetaText(doc.mNativeDocPtr, "Keywords");
+            meta.creator = nativeGetDocumentMetaText(doc.mNativeDocPtr, "Creator");
+            meta.producer = nativeGetDocumentMetaText(doc.mNativeDocPtr, "Producer");
+            meta.creationDate = nativeGetDocumentMetaText(doc.mNativeDocPtr, "CreationDate");
+            meta.modDate = nativeGetDocumentMetaText(doc.mNativeDocPtr, "ModDate");
+
+            return meta;
+        }
+    }
+
+    public List<PdfDocument.Bookmark> getTableOfContents(PdfDocument doc) {
+        synchronized (lock) {
+            List<PdfDocument.Bookmark> topLevel = new ArrayList<>();
+            Long first = nativeGetFirstChildBookmark(doc.mNativeDocPtr, null);
+            if (first != null) {
+                recursiveGetBookmark(topLevel, doc, first);
+            }
+            return topLevel;
+        }
+    }
+
+    private void recursiveGetBookmark(List<PdfDocument.Bookmark> tree, PdfDocument doc, long bookmarkPtr) {
+        PdfDocument.Bookmark bookmark = new PdfDocument.Bookmark();
+        bookmark.mNativePtr = bookmarkPtr;
+        bookmark.title = nativeGetBookmarkTitle(bookmarkPtr);
+        bookmark.pageIdx = nativeGetBookmarkDestIndex(doc.mNativeDocPtr, bookmarkPtr);
+        tree.add(bookmark);
+
+        Long child = nativeGetFirstChildBookmark(doc.mNativeDocPtr, bookmarkPtr);
+        if (child != null) {
+            recursiveGetBookmark(bookmark.getChildren(), doc, child);
+        }
+
+        Long sibling = nativeGetSiblingBookmark(doc.mNativeDocPtr, bookmarkPtr);
+        if (sibling != null) {
+            recursiveGetBookmark(tree, doc, sibling);
         }
     }
 }
