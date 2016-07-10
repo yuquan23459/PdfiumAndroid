@@ -20,7 +20,7 @@ public class PdfiumCore {
         System.loadLibrary("jniPdfium");
     }
 
-    private native long nativeOpenDocument(int fd);
+    private native long nativeOpenDocument(int fd, String password);
 
     private native void nativeCloseDocument(long docPtr);
 
@@ -93,10 +93,14 @@ public class PdfiumCore {
     }
 
     public PdfDocument newDocument(ParcelFileDescriptor fd) throws IOException {
+        return newDocument(fd, null);
+    }
+
+    public PdfDocument newDocument(ParcelFileDescriptor fd, String password) throws IOException {
         PdfDocument document = new PdfDocument();
         document.parcelFileDescriptor = fd;
         synchronized (lock) {
-            document.mNativeDocPtr = nativeOpenDocument(getNumFd(fd));
+            document.mNativeDocPtr = nativeOpenDocument(getNumFd(fd), password);
         }
 
         return document;

@@ -1,3 +1,7 @@
+## 1.3.0 (2016-07-10)
+* added support for opening documents with password
+* fixed bug with SIGSEV when closing document
+
 ## 1.2.0 (2016-07-06)
 * `libmodpdfium` compiled with methods for retrieving bookmarks and metadata
 * added `PdfiumCore#getDocumentMeta()` for retrieving document metadata

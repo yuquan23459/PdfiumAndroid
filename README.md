@@ -7,16 +7,14 @@ Forked for use with [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfVie
 
 API is highly compatible with original version, only additional methods were created.
 
-## What's new in 1.2.0?
-* `libmodpdfium` compiled with methods for retrieving bookmarks and metadata
-* added `PdfiumCore#getDocumentMeta` for retrieving document metadata
-* added `PdfiumCore#getTableOfContents` for reading whole tree of bookmarks
-* comment out native rendering debug
+## What's new in 1.3.0?
+* added support for opening documents with password
+* fixed bug with SIGSEV when closing document
 
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.2.0'`
+`compile 'com.github.barteksc:pdfium-android:1.3.0'`
 
 Library is available in jcenter and Maven Central repositories.
 

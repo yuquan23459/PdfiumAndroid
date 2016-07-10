@@ -45,7 +45,7 @@ class DocumentFile {
     int fileFd;
 
     public:
-    FPDF_DOCUMENT pdfDocument;
+    FPDF_DOCUMENT pdfDocument = NULL;
     size_t fileSize;
 
     DocumentFile() { initLibraryIfNeed(); }
@@ -148,7 +148,7 @@ static int getBlock(void* param, unsigned long position, unsigned char* outBuffe
     return 1;
 }
 
-JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd){
+JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd, jstring password){
 
     size_t fileLength = (size_t)getFileSize(fd);
     if(fileLength <= 0) {
@@ -164,7 +164,16 @@ JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd){
     loader.m_Param = reinterpret_cast<void*>(intptr_t(fd));
     loader.m_GetBlock = &getBlock;
 
-    FPDF_DOCUMENT document = FPDF_LoadCustomDocument(&loader, NULL);
+    const char *cpassword = NULL;
+    if(password != NULL) {
+        cpassword = env->GetStringUTFChars(password, NULL);
+    }
+
+    FPDF_DOCUMENT document = FPDF_LoadCustomDocument(&loader, cpassword);
+
+    if(cpassword != NULL) {
+        env->ReleaseStringUTFChars(password, cpassword);
+    }
 
     if (!document) {
         delete docFile;
