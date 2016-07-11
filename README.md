@@ -11,10 +11,12 @@ API is highly compatible with original version, only additional methods were cre
 * added support for opening documents with password
 * fixed bug with SIGSEV when closing document
 
+In 1.3.1 `PdfiumCore#newDocument()` may throw `PdfPasswordException` to help with recognition of password requirement or incorrect password.
+
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.3.0'`
+`compile 'com.github.barteksc:pdfium-android:1.3.1'`
 
 Library is available in jcenter and Maven Central repositories.
 

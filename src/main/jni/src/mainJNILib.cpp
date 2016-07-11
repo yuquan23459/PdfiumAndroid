@@ -178,11 +178,17 @@ JNI_FUNC(jlong, PdfiumCore, nativeOpenDocument)(JNI_ARGS, jint fd, jstring passw
     if (!document) {
         delete docFile;
 
-        char* error = getErrorDescription(FPDF_GetLastError());
-        jniThrowExceptionFmt(env, "java/io/IOException",
+        const long errorNum = FPDF_GetLastError();
+        if(errorNum == FPDF_ERR_PASSWORD) {
+            jniThrowException(env, "com/shockwave/pdfium/PdfPasswordException",
+                                    "Password required or incorrect password.");
+        } else {
+            char* error = getErrorDescription(errorNum);
+            jniThrowExceptionFmt(env, "java/io/IOException",
                                     "cannot create document: %s", error);
 
-        free(error);
+            free(error);
+        }
 
         return -1;
     }

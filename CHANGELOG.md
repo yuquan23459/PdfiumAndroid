@@ -1,3 +1,6 @@
+## 1.3.1 (2016-07-11)
+* `PdfiumCore#newDocument()` may throw `PdfPasswordException` to help with recognition of password requirement or incorrect password.
+
 ## 1.3.0 (2016-07-10)
 * added support for opening documents with password
 * fixed bug with SIGSEV when closing document
