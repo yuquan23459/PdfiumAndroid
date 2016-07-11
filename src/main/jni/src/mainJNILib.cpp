@@ -277,7 +277,8 @@ static void renderPageInternal( FPDF_PAGE page,
                                 ANativeWindow_Buffer *windowBuffer,
                                 int startX, int startY,
                                 int canvasHorSize, int canvasVerSize,
-                                int drawSizeHor, int drawSizeVer){
+                                int drawSizeHor, int drawSizeVer,
+                                bool drawAnnot){
 
     FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx( canvasHorSize, canvasVerSize,
                                                  FPDFBitmap_BGRA,
@@ -299,18 +300,24 @@ static void renderPageInternal( FPDF_PAGE page,
     int baseVerSize = (canvasVerSize < drawSizeVer)? canvasVerSize : drawSizeVer;
     int baseX = (startX < 0)? 0 : startX;
     int baseY = (startY < 0)? 0 : startY;
+    int flags = FPDF_REVERSE_BYTE_ORDER;
+
+    if(drawAnnot)
+    	flags |= FPDF_ANNOT;
+
     FPDFBitmap_FillRect( pdfBitmap, baseX, baseY, baseHorSize, baseVerSize,
                          255, 255, 255, 255); //White
 
     FPDF_RenderPageBitmap( pdfBitmap, page,
                            startX, startY,
                            drawSizeHor, drawSizeVer,
-                           0, FPDF_REVERSE_BYTE_ORDER );
+                           0, flags );
 }
 
 JNI_FUNC(void, PdfiumCore, nativeRenderPage)(JNI_ARGS, jlong pagePtr, jobject objSurface,
                                              jint dpi, jint startX, jint startY,
-                                             jint drawSizeHor, jint drawSizeVer){
+                                             jint drawSizeHor, jint drawSizeVer,
+                                             jboolean drawAnnot){
     ANativeWindow *nativeWindow = ANativeWindow_fromSurface(env, objSurface);
     if(nativeWindow == NULL){
         LOGE("native window pointer null");
@@ -341,7 +348,8 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPage)(JNI_ARGS, jlong pagePtr, jobject ob
     renderPageInternal(page, &buffer,
                        (int)startX, (int)startY,
                        buffer.width, buffer.height,
-                       (int)drawSizeHor, (int)drawSizeVer);
+                       (int)drawSizeHor, (int)drawSizeVer,
+                       (bool)drawAnnot);
 
     ANativeWindow_unlockAndPost(nativeWindow);
     ANativeWindow_release(nativeWindow);
@@ -349,7 +357,8 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPage)(JNI_ARGS, jlong pagePtr, jobject ob
 
 JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobject bitmap,
                                              jint dpi, jint startX, jint startY,
-                                             jint drawSizeHor, jint drawSizeVer){
+                                             jint drawSizeHor, jint drawSizeVer,
+                                             jboolean drawAnnot){
 
     FPDF_PAGE page = reinterpret_cast<FPDF_PAGE>(pagePtr);
 
@@ -399,13 +408,18 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
     int baseVerSize = (canvasVerSize < drawSizeVer)? canvasVerSize : (int)drawSizeVer;
     int baseX = (startX < 0)? 0 : (int)startX;
     int baseY = (startY < 0)? 0 : (int)startY;
+    int flags = FPDF_REVERSE_BYTE_ORDER;
+
+    if(drawAnnot)
+    	flags |= FPDF_ANNOT;
+
     FPDFBitmap_FillRect( pdfBitmap, baseX, baseY, baseHorSize, baseVerSize,
                          255, 255, 255, 255); //White
 
     FPDF_RenderPageBitmap( pdfBitmap, page,
                            startX, startY,
                            (int)drawSizeHor, (int)drawSizeVer,
-                           0, FPDF_REVERSE_BYTE_ORDER );
+                           0, flags );
 
     AndroidBitmap_unlockPixels(env, bitmap);
 }
