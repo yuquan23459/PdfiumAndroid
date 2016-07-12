@@ -46,11 +46,13 @@ public class PdfiumCore {
     //private native void nativeRenderPage(long pagePtr, long nativeWindowPtr);
     private native void nativeRenderPage(long pagePtr, Surface surface, int dpi,
                                          int startX, int startY,
-                                         int drawSizeHor, int drawSizeVer);
+                                         int drawSizeHor, int drawSizeVer,
+                                         boolean drawAnnot);
 
     private native void nativeRenderPageBitmap(long pagePtr, Bitmap bitmap, int dpi,
                                                int startX, int startY,
-                                               int drawSizeHor, int drawSizeVer);
+                                               int drawSizeHor, int drawSizeVer,
+                                               boolean drawAnnot);
 
     private native String nativeGetDocumentMetaText(long docPtr, String tag);
 
@@ -178,12 +180,19 @@ public class PdfiumCore {
     }
 
     public void renderPage(PdfDocument doc, Surface surface, int pageIndex,
-                           int startX, int startY, int drawSizeX, int drawSizeY) {
+                           int startX, int startY, int drawSizeX, int drawSizeY)
+    {
+        renderPage(doc, surface, pageIndex, startX, startY, drawSizeX, drawSizeY, false);
+    }
+
+    public void renderPage(PdfDocument doc, Surface surface, int pageIndex,
+                           int startX, int startY, int drawSizeX, int drawSizeY,
+                           boolean drawAnnot) {
         synchronized (lock) {
             try {
                 //nativeRenderPage(doc.mNativePagesPtr.get(pageIndex), surface, mCurrentDpi);
                 nativeRenderPage(doc.mNativePagesPtr.get(pageIndex), surface, mCurrentDpi,
-                        startX, startY, drawSizeX, drawSizeY);
+                        startX, startY, drawSizeX, drawSizeY, drawAnnot);
             } catch (NullPointerException e) {
                 Log.e(TAG, "mContext may be null");
                 e.printStackTrace();
@@ -196,10 +205,16 @@ public class PdfiumCore {
 
     public void renderPageBitmap(PdfDocument doc, Bitmap bitmap, int pageIndex,
                                  int startX, int startY, int drawSizeX, int drawSizeY) {
+        renderPageBitmap(doc, bitmap, pageIndex, startX, startY, drawSizeX, drawSizeY, false);
+    }
+
+    public void renderPageBitmap(PdfDocument doc, Bitmap bitmap, int pageIndex,
+                                 int startX, int startY, int drawSizeX, int drawSizeY,
+                                 boolean drawAnnot) {
         synchronized (lock) {
             try {
                 nativeRenderPageBitmap(doc.mNativePagesPtr.get(pageIndex), bitmap, mCurrentDpi,
-                        startX, startY, drawSizeX, drawSizeY);
+                        startX, startY, drawSizeX, drawSizeY, drawAnnot);
             } catch (NullPointerException e) {
                 Log.e(TAG, "mContext may be null");
                 e.printStackTrace();
