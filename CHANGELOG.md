@@ -1,3 +1,6 @@
+## 1.4.0 (2016-07-12)
+* merge pull request by [usef](https://github.com/usef) with added support for rendering annotations. Due to limitations of _Pdfium_, messages from comments cannot be read and are rendered only as speech balloons.
+
 ## 1.3.1 (2016-07-11)
 * `PdfiumCore#newDocument()` may throw `PdfPasswordException` to help with recognition of password requirement or incorrect password.
 

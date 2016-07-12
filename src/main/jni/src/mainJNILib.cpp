@@ -284,7 +284,7 @@ static void renderPageInternal( FPDF_PAGE page,
                                 int startX, int startY,
                                 int canvasHorSize, int canvasVerSize,
                                 int drawSizeHor, int drawSizeVer,
-                                bool drawAnnot){
+                                bool renderAnnot){
 
     FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx( canvasHorSize, canvasVerSize,
                                                  FPDFBitmap_BGRA,
@@ -308,8 +308,9 @@ static void renderPageInternal( FPDF_PAGE page,
     int baseY = (startY < 0)? 0 : startY;
     int flags = FPDF_REVERSE_BYTE_ORDER;
 
-    if(drawAnnot)
+    if(renderAnnot) {
     	flags |= FPDF_ANNOT;
+    }
 
     FPDFBitmap_FillRect( pdfBitmap, baseX, baseY, baseHorSize, baseVerSize,
                          255, 255, 255, 255); //White
@@ -323,7 +324,7 @@ static void renderPageInternal( FPDF_PAGE page,
 JNI_FUNC(void, PdfiumCore, nativeRenderPage)(JNI_ARGS, jlong pagePtr, jobject objSurface,
                                              jint dpi, jint startX, jint startY,
                                              jint drawSizeHor, jint drawSizeVer,
-                                             jboolean drawAnnot){
+                                             jboolean renderAnnot){
     ANativeWindow *nativeWindow = ANativeWindow_fromSurface(env, objSurface);
     if(nativeWindow == NULL){
         LOGE("native window pointer null");
@@ -355,7 +356,7 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPage)(JNI_ARGS, jlong pagePtr, jobject ob
                        (int)startX, (int)startY,
                        buffer.width, buffer.height,
                        (int)drawSizeHor, (int)drawSizeVer,
-                       (bool)drawAnnot);
+                       (bool)renderAnnot);
 
     ANativeWindow_unlockAndPost(nativeWindow);
     ANativeWindow_release(nativeWindow);
@@ -364,7 +365,7 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPage)(JNI_ARGS, jlong pagePtr, jobject ob
 JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobject bitmap,
                                              jint dpi, jint startX, jint startY,
                                              jint drawSizeHor, jint drawSizeVer,
-                                             jboolean drawAnnot){
+                                             jboolean renderAnnot){
 
     FPDF_PAGE page = reinterpret_cast<FPDF_PAGE>(pagePtr);
 
@@ -416,8 +417,9 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
     int baseY = (startY < 0)? 0 : (int)startY;
     int flags = FPDF_REVERSE_BYTE_ORDER;
 
-    if(drawAnnot)
+    if(renderAnnot) {
     	flags |= FPDF_ANNOT;
+    }
 
     FPDFBitmap_FillRect( pdfBitmap, baseX, baseY, baseHorSize, baseVerSize,
                          255, 255, 255, 255); //White

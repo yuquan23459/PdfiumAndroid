@@ -7,16 +7,13 @@ Forked for use with [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfVie
 
 API is highly compatible with original version, only additional methods were created.
 
-## What's new in 1.3.0?
-* added support for opening documents with password
-* fixed bug with SIGSEV when closing document
-
-In 1.3.1 `PdfiumCore#newDocument()` may throw `PdfPasswordException` to help with recognition of password requirement or incorrect password.
+## What's new in 1.4.0?
+* merge pull request by [usef](https://github.com/usef) with added support for rendering annotations. Due to limitations of _Pdfium_, messages from comments cannot be read and are rendered only as speech balloons.
 
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.3.1'`
+`compile 'com.github.barteksc:pdfium-android:1.4.0'`
 
 Library is available in jcenter and Maven Central repositories.
 
