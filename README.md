@@ -7,13 +7,14 @@ Forked for use with [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfVie
 
 API is highly compatible with original version, only additional methods were created.
 
-## What's new in 1.4.0?
-* merge pull request by [usef](https://github.com/usef) with added support for rendering annotations. Due to limitations of _Pdfium_, messages from comments cannot be read and are rendered only as speech balloons.
+## What's new in 1.5.0?
+* Add method `PdfiumCore#newDocument(byte[])` for reading PDF documents from memory
+* Cleanup AndroidManifest.xml to solve problems with manifest merger
 
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.4.0'`
+`compile 'com.github.barteksc:pdfium-android:1.5.0'`
 
 Library is available in jcenter and Maven Central repositories.
 

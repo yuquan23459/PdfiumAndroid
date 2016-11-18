@@ -1,3 +1,7 @@
+## 1.5.0 (2016-11-18)
+* Add method `PdfiumCore#newDocument(byte[])` for reading PDF documents from memory
+* Cleanup AndroidManifest.xml to solve problems with manifest merger
+
 ## 1.4.0 (2016-07-12)
 * merge pull request by [usef](https://github.com/usef) with added support for rendering annotations. Due to limitations of _Pdfium_, messages from comments cannot be read and are rendered only as speech balloons.
 
