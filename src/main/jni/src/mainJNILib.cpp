@@ -15,7 +15,7 @@ extern "C" {
 using namespace android;
 
 #include <fpdfview.h>
-#include <fpdfdoc.h>
+#include <fpdf_doc.h>
 #include <string>
 
 static Mutex sLibraryLock;
@@ -26,7 +26,7 @@ static void initLibraryIfNeed(){
     Mutex::Autolock lock(sLibraryLock);
     if(sLibraryReferenceCount == 0){
         LOGD("Init FPDF library");
-        FPDF_InitLibrary(NULL);
+        FPDF_InitLibrary();
     }
     sLibraryReferenceCount++;
 }
@@ -346,7 +346,7 @@ static void renderPageInternal( FPDF_PAGE page,
 
     if(drawSizeHor < canvasHorSize || drawSizeVer < canvasVerSize){
         FPDFBitmap_FillRect( pdfBitmap, 0, 0, canvasHorSize, canvasVerSize,
-                             0x84, 0x84, 0x84, 255); //Gray
+                             0x848484FF); //Gray
     }
 
     int baseHorSize = (canvasHorSize < drawSizeHor)? canvasHorSize : drawSizeHor;
@@ -360,7 +360,7 @@ static void renderPageInternal( FPDF_PAGE page,
     }
 
     FPDFBitmap_FillRect( pdfBitmap, baseX, baseY, baseHorSize, baseVerSize,
-                         255, 255, 255, 255); //White
+                         0xFFFFFFFF); //White
 
     FPDF_RenderPageBitmap( pdfBitmap, page,
                            startX, startY,
@@ -455,7 +455,7 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
 
     if(drawSizeHor < canvasHorSize || drawSizeVer < canvasVerSize){
         FPDFBitmap_FillRect( pdfBitmap, 0, 0, canvasHorSize, canvasVerSize,
-                             0x84, 0x84, 0x84, 255); //Gray
+                             0x848484FF); //Gray
     }
 
     int baseHorSize = (canvasHorSize < drawSizeHor)? canvasHorSize : (int)drawSizeHor;
@@ -469,7 +469,7 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
     }
 
     FPDFBitmap_FillRect( pdfBitmap, baseX, baseY, baseHorSize, baseVerSize,
-                         255, 255, 255, 255); //White
+                         0xFFFFFFFF); //White
 
     FPDF_RenderPageBitmap( pdfBitmap, page,
                            startX, startY,
@@ -493,7 +493,7 @@ JNI_FUNC(jstring, PdfiumCore, nativeGetDocumentMetaText)(JNI_ARGS, jlong docPtr,
     std::wstring text;
     FPDF_GetMetaText(doc->pdfDocument, ctag, WriteInto(&text, buffer_bytes + 1), buffer_bytes);
     env->ReleaseStringUTFChars(tag, ctag);
-    return env->NewString((jchar*) text.c_str(), buffer_bytes / 2 - 2);
+    return env->NewString((jchar*) text.c_str(), buffer_bytes / 2 - 1);
 }
 
 JNI_FUNC(jobject, PdfiumCore, nativeGetFirstChildBookmark)(JNI_ARGS, jlong docPtr, jobject bookmarkPtr) {
