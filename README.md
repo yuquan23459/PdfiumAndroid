@@ -37,6 +37,8 @@ void openPdf() {
                 Bitmap.Config.ARGB_8888);
         pdfiumCore.renderPageBitmap(pdfDocument, bitmap, pageNum, 0, 0,
                 width, height);
+        //if you need to render annotations and form fields, you can use
+        //the same method above adding 'true' as last param
 
         iv.setImageBitmap(bitmap);
 
