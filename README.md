@@ -7,14 +7,13 @@ Forked for use with [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfVie
 
 API is highly compatible with original version, only additional methods were created.
 
-## What's new in 1.6.0?
-* Pdfium updated to newest version, from Android 7.1.1.
-It should fix many rendering issues and (thanks to freetype support) fix problems with fonts.
+## What's new in 1.6.1?
+* Fix bug from 1.6.0 - not embedded fonts was not rendered
 
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.6.0'`
+`compile 'com.github.barteksc:pdfium-android:1.6.1'`
 
 Library is available in jcenter and Maven Central repositories.
 

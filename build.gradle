@@ -4,7 +4,7 @@ buildscript {
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.2.2'
+        classpath 'com.android.tools.build:gradle:2.3.2'
         classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
         classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
     }
@@ -25,7 +25,7 @@ ext {
     siteUrl = 'https://github.com/barteksc/PdfiumAndroid'
     gitUrl = 'https://github.com/barteksc/PdfiumAndroid.git'
 
-    libraryVersion = '1.6.0'
+    libraryVersion = '1.6.1'
 
     developerId = 'barteksc'
     developerName = 'Bartosz Schiller'
@@ -38,13 +38,13 @@ ext {
 
 android {
     compileSdkVersion 25
-    buildToolsVersion "25.0.2"
+    buildToolsVersion "25.0.3"
 
     defaultConfig {
         minSdkVersion 9
         targetSdkVersion 25
         versionCode 1
-        versionName "1.6.0"
+        versionName "1.6.1"
     }
     buildTypes {
         release {
@@ -63,7 +63,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:support-v4:25.2.0'
+    compile 'com.android.support:support-v4:25.3.1'
 }
 
 apply from: 'https://raw.githubusercontent.com/nuuneoi/JCenter/master/installv1.gradle'
