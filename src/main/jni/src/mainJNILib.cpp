@@ -40,6 +40,12 @@ static void destroyLibraryIfNeed(){
     }
 }
 
+struct rgb {
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+};
+
 class DocumentFile {
     private:
     int fileFd;
@@ -133,6 +139,25 @@ jobject NewLong(JNIEnv* env, jlong value) {
     jclass cls = env->FindClass("java/lang/Long");
     jmethodID methodID = env->GetMethodID(cls, "<init>", "(J)V");
     return env->NewObject(cls, methodID, value);
+}
+
+uint16_t rgbTo565(rgb *color) {
+    return ((color->red >> 3) << 11) | ((color->green >> 2) << 5) | (color->blue >> 3);
+}
+
+void rgbBitmapTo565(void *source, int sourceStride, void *dest, AndroidBitmapInfo *info) {
+    rgb *srcLine;
+    uint16_t *dstLine;
+    int y, x;
+    for (y = 0; y < info->height; y++) {
+        srcLine = (rgb*) source;
+        dstLine = (uint16_t*) dest;
+        for (x = 0; x < info->width; x++) {
+            dstLine[x] = rgbTo565(&srcLine[x]);
+        }
+        source = (char*) source + sourceStride;
+        dest = (char*) dest + info->stride;
+    }
 }
 
 extern "C" { //For JNI support
@@ -431,8 +456,8 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
     int canvasHorSize = info.width;
     int canvasVerSize = info.height;
 
-    if(info.format != ANDROID_BITMAP_FORMAT_RGBA_8888){
-        LOGE("Bitmap format must be RGBA_8888");
+    if(info.format != ANDROID_BITMAP_FORMAT_RGBA_8888 && info.format != ANDROID_BITMAP_FORMAT_RGB_565){
+        LOGE("Bitmap format must be RGBA_8888 or RGB_565");
         return;
     }
 
@@ -442,9 +467,21 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
         return;
     }
 
+    void *tmp;
+    int format;
+    int sourceStride;
+    if (info.format == ANDROID_BITMAP_FORMAT_RGB_565) {
+        tmp = malloc(canvasVerSize * canvasHorSize * sizeof(rgb));
+        sourceStride = canvasHorSize * sizeof(rgb);
+        format = FPDFBitmap_BGR;
+    } else {
+        tmp = addr;
+        sourceStride = info.stride;
+        format = FPDFBitmap_BGRA;
+    }
+
     FPDF_BITMAP pdfBitmap = FPDFBitmap_CreateEx( canvasHorSize, canvasVerSize,
-                                                     FPDFBitmap_BGRA,
-                                                     addr, info.stride);
+                                                     format, tmp, sourceStride);
 
     /*LOGD("Start X: %d", startX);
     LOGD("Start Y: %d", startY);
@@ -475,6 +512,11 @@ JNI_FUNC(void, PdfiumCore, nativeRenderPageBitmap)(JNI_ARGS, jlong pagePtr, jobj
                            startX, startY,
                            (int)drawSizeHor, (int)drawSizeVer,
                            0, flags );
+
+    if (info.format == ANDROID_BITMAP_FORMAT_RGB_565) {
+        rgbBitmapTo565(tmp, sourceStride, addr, &info);
+        free(tmp);
+    }
 
     AndroidBitmap_unlockPixels(env, bitmap);
 }

@@ -7,13 +7,13 @@ Forked for use with [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfVie
 
 API is highly compatible with original version, only additional methods were created.
 
-## What's new in 1.6.1?
-* Fix bug from 1.6.0 - not embedded fonts was not rendered
+## What's new in 1.7.0?
+* Add rendering bitmap in RGB 565 format, which reduces memory usage (about twice)
 
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.6.1'`
+`compile 'com.github.barteksc:pdfium-android:1.7.0'`
 
 Library is available in jcenter and Maven Central repositories.
 
@@ -32,8 +32,10 @@ void openPdf() {
         int width = pdfiumCore.getPageWidthPoint(pdfDocument, pageNum);
         int height = pdfiumCore.getPageHeightPoint(pdfDocument, pageNum);
 
+        // ARGB_8888 - best quality, high memory usage, higher possibility of OutOfMemoryError
+        // RGB_565 - little worse quality, twice less memory usage
         Bitmap bitmap = Bitmap.createBitmap(width, height,
-                Bitmap.Config.ARGB_8888);
+                Bitmap.Config.RGB_565);
         pdfiumCore.renderPageBitmap(pdfDocument, bitmap, pageNum, 0, 0,
                 width, height);
         //if you need to render annotations and form fields, you can use

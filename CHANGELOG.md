@@ -1,3 +1,6 @@
+## 1.7.0 (2017-06-21)
+* Add rendering bitmap in RGB 565 format, which reduces memory usage (about twice)
+
 ## 1.6.1 (2017-06-09)
 * Fix bug from 1.6.0 - not embedded fonts was not rendered
 
