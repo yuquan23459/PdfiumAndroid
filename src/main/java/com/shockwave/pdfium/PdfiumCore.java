@@ -16,11 +16,14 @@ public class PdfiumCore {
     private static final String TAG = PdfiumCore.class.getName();
 
     static {
-
-        System.loadLibrary("modpng");
-        System.loadLibrary("modft2");
-        System.loadLibrary("modpdfium");
-        System.loadLibrary("jniPdfium");
+        try {
+            System.loadLibrary("modpng");
+            System.loadLibrary("modft2");
+            System.loadLibrary("modpdfium");
+            System.loadLibrary("jniPdfium");
+        } catch (UnsatisfiedLinkError e) {
+            Log.e(TAG, "Native libraries failed to load." + e);
+        }
     }
 
     private native long nativeOpenDocument(int fd, String password);
