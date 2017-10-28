@@ -1,3 +1,6 @@
+## 1.7.1 (2017-10-28)
+* Merge pull request by [Phaestion](https://github.com/Phaestion) which prevents `UnsatisfiedLinkError`
+
 ## 1.7.0 (2017-06-21)
 * Add rendering bitmap in RGB 565 format, which reduces memory usage (about twice)
 

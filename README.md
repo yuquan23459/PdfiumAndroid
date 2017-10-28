@@ -10,10 +10,12 @@ API is highly compatible with original version, only additional methods were cre
 ## What's new in 1.7.0?
 * Add rendering bitmap in RGB 565 format, which reduces memory usage (about twice)
 
+1.7.1 merges pull request by [Phaestion](https://github.com/Phaestion) which prevents `UnsatisfiedLinkError`
+
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.7.0'`
+`compile 'com.github.barteksc:pdfium-android:1.7.1'`
 
 Library is available in jcenter and Maven Central repositories.
 
