@@ -1,3 +1,10 @@
+## 1.8.0 (2017-11-11)
+* Add method for reading links from given page
+* Add method for mapping page coordinates to screen coordinates
+* Add `PdfiumCore#getPageSize(...)` method, which does not require page to be opened
+* Add `Size` and `SizeF` utility classes
+* Add javadoc comments to `PdfiumCore`
+
 ## 1.7.1 (2017-10-28)
 * Merge pull request by [Phaestion](https://github.com/Phaestion) which prevents `UnsatisfiedLinkError`
 

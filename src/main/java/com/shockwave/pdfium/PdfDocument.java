@@ -1,5 +1,6 @@
 package com.shockwave.pdfium;
 
+import android.graphics.RectF;
 import android.os.ParcelFileDescriptor;
 import android.support.v4.util.ArrayMap;
 
@@ -72,6 +73,30 @@ public class PdfDocument {
 
         public long getPageIdx() {
             return pageIdx;
+        }
+    }
+
+    public static class Link {
+        private RectF bounds;
+        private Integer destPageIdx;
+        private String uri;
+
+        public Link(RectF bounds, Integer destPageIdx, String uri) {
+            this.bounds = bounds;
+            this.destPageIdx = destPageIdx;
+            this.uri = uri;
+        }
+
+        public Integer getDestPageIdx() {
+            return destPageIdx;
+        }
+
+        public String getUri() {
+            return uri;
+        }
+
+        public RectF getBounds() {
+            return bounds;
         }
     }
 

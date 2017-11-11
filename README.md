@@ -7,17 +7,56 @@ Forked for use with [AndroidPdfViewer](https://github.com/barteksc/AndroidPdfVie
 
 API is highly compatible with original version, only additional methods were created.
 
-## What's new in 1.7.0?
-* Add rendering bitmap in RGB 565 format, which reduces memory usage (about twice)
-
-1.7.1 merges pull request by [Phaestion](https://github.com/Phaestion) which prevents `UnsatisfiedLinkError`
+## What's new in 1.8.0?
+* Add method for reading links from given page
+* Add method for mapping page coordinates to screen coordinates
+* Add `PdfiumCore#getPageSize(...)` method, which does not require page to be opened
+* Add `Size` and `SizeF` utility classes
+* Add javadoc comments to `PdfiumCore`
 
 ## Installation
 Add to _build.gradle_:
 
-`compile 'com.github.barteksc:pdfium-android:1.7.1'`
+`compile 'com.github.barteksc:pdfium-android:1.8.0'`
 
 Library is available in jcenter and Maven Central repositories.
+
+## Methods inconsistency
+Version 1.8.0 added method for getting page size - `PdfiumCore#getPageSize(...)`.
+It is important to note, that this method does not require page to be opened. However, there are also
+old `PdfiumCore#getPageWidth(...)`, `PdfiumCore#getPageWidthPoint(...)`, `PdfiumCore#getPageHeight()`
+and `PdfiumCore#getPageHeightPoint()` which require page to be opened.
+
+This inconsistency will be resolved in next major version, which aims to redesign API.
+
+## Reading links
+Version 1.8.0 introduces `PdfiumCore#getPageLinks(PdfDocument, int)` method, which allows to get list
+of links from given page. Links are returned as `List` of type `PdfDocument.Link`.
+`PdfDocument.Link` holds destination page (may be null), action URI (may be null or empty)
+and link bounds in document page coordinates. To map page coordinates to screen coordinates you may use
+`PdfiumCore#mapRectToDevice(...)`. See `PdfiumCore#mapPageCoordsToDevice(...)` for parameters description.
+
+Sample usage:
+``` java
+PdfiumCore core = ...;
+PdfDocument document = ...;
+int pageIndex = 0;
+core.openPage(document, pageIndex);
+List<PdfDocument.Link> links = core.getPageLinks(document, pageIndex);
+for (PdfDocument.Link link : links) {
+    RectF mappedRect = core.mapRectToDevice(document, pageIndex, ..., link.getBounds())
+
+    if (clickedArea(mappedRect)) {
+        String uri = link.getUri();
+        if (link.getDestPageIdx() != null) {
+            // jump to page
+        } else if (uri != null && !uri.isEmpty()) {
+            // open URI using Intent
+        }
+    }
+}
+
+```
 
 ## Simple example
 ``` java
