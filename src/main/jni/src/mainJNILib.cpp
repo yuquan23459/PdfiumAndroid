@@ -368,7 +368,12 @@ JNI_FUNC(jobject, PdfiumCore, nativeGetPageSizeByIndex)(JNI_ARGS, jlong docPtr, 
     }
 
     double width, height;
-    FPDF_GetPageSizeByIndex(doc->pdfDocument, pageIndex, &width, &height);
+    int result = FPDF_GetPageSizeByIndex(doc->pdfDocument, pageIndex, &width, &height);
+
+    if (result == 0) {
+        width = 0;
+        height = 0;
+    }
 
     jint widthInt = (jint) (width * dpi / 72);
     jint heightInt = (jint) (height * dpi / 72);

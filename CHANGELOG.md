@@ -1,3 +1,6 @@
+## 1.8.1 (2017-11-15)
+* Handle `PdfiumCore#getPageSize()` errors and return `Size(0, 0)`
+
 ## 1.8.0 (2017-11-11)
 * Add method for reading links from given page
 * Add method for mapping page coordinates to screen coordinates
